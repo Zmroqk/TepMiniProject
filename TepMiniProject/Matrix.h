@@ -450,6 +450,18 @@ Matrix<T>::Matrix(size_t firstDimensionSize, size_t secondDimensionSize)
 }
 
 //-------------------------------------------------------------------------------------------METHODS-----------------------------------------------------------------------------------------------------------------
+/// <summary>
+/// Add two matrices together
+/// </summary>
+/// <param name="otherMatrix">Matrix to use when adding to this one</param>
+/// <param name="outMatrix">New matrix output, if nullptr provided operation will operate on this instance</param>
+/// <returns>Operation status</returns>
+/// <exception cref="MatrixStatus::NoMatrix"/>
+/// <exception cref="MatrixStatus::NoDataProvided"/>
+/// <exception cref="MatrixStatus::IncorrectFirstDimension"/>
+/// <exception cref="MatrixStatus::IncorrectSecondDimension"/>
+/// <exception cref="MatrixStatus::UnknownError"/>
+/// <exception cref="MatrixStatus::Success"/>
 template<typename T>
 MatrixStatus Matrix<T>::Add(const Matrix<T>& otherMatrix, Matrix<T>** outMatrix)
 {
@@ -606,7 +618,7 @@ const T* Matrix<T>::GetValueAtPosition(size_t firstDimIndex, size_t secondDimInd
 	return &this->ppMatrix[firstDimIndex][secondDimIndex];
 }
 
-//-------------------------------------------------------------------------------------------------SET--------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 template<>
 inline std::string Matrix<int>::ToString() const
 {
@@ -705,7 +717,7 @@ MatrixStatus Matrix<T>::SetIdentityMatrix(T& value, T& valueForRest)
 	return MatrixStatus::Success;
 }
 
-//-------------------------------------------------------------------------------------------OPERATORS--------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 template<typename T>
 Matrix<T> Matrix<T>::operator+(const Matrix<T>& otherMatrix)

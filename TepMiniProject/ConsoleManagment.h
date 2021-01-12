@@ -5,6 +5,8 @@
 #include "Matrix.h"
 #include "Type.h"
 #include "Localisation.h"
+#include "MatrixWrapper.h"
+
 using namespace std;
 
 const int NEW_LINE = (int)'\r';
@@ -29,6 +31,7 @@ const string ERROR_INCORRECT_SECOND_DIMENSION = "Niepoprawny drugi wymiar";
 const string ERROR_UNKNOWN = "Nieznany blad";
 */
 
+class MatrixWrapper;
 
 class ConsoleManagment {
 public:
@@ -37,9 +40,9 @@ public:
 	string GetLine(const string& prompt, bool useCLS = true) const;
 	int GetInt(const string& prompt, bool useCLS = true) const;
 	float GetFloat(const string& prompt, bool useCLS = true) const;
-	int GetOption(const string& prompt, vector<string>& options) const;
-	int GetOption(const string& prompt, initializer_list<string> options) const;
-
+	double GetDouble(const string& prompt, bool useCLS = true) const;
+	int GetOption(const string& prompt, vector<string>& options, bool useReturn = true) const;
+	int GetOption(const string& prompt, initializer_list<string> options, bool useReturn = true) const;
 
 	void Pause() const;
 	inline void ClearScreen() const { system(CLS.c_str()); }
@@ -51,16 +54,20 @@ public:
 	void UseDoOperationMenu(Type option);
 	void UseModifyMatrixMenu(Type option);
 
-	
+//-------------------------------------------------------------------operators---------------------------------------------------------------------------
+
+	//operator ConsoleManagment& () { return *this; }
+	//operator ConsoleManagment* () { return this; }
+
+//-------------------------------------------------------------------private-----------------------------------------------------------------------------
 private:
 	void GetInputHelper(int character, std::string& text) const;
 	bool ProcessResult(MatrixStatus status);
-	void* ChooseMatrix(Type option, const string& prompt = localisation::STRING_CHOOSE_MATRIX);
+	MatrixWrapper* ChooseMatrix(Type option, const string& prompt = localisation::STRING_CHOOSE_MATRIX);
 
-	vector<Matrix<int>*> matrixInt;
-	vector<Matrix<double>*> matrixDouble;
-	vector<Matrix<float>*> matrixFloat;
-	vector<Matrix<string>*> matrixString;
+	void OperationResult(MatrixWrapper* matrixOne, MatrixWrapper* matrixSecond, MatrixWrapper* newMatrix);
+	void OperationResult(MatrixWrapper* matrixOne, MatrixWrapper* newMatrix);
 
+	vector<MatrixWrapper*> matrixes;
 	//Maybe we could use some vector<SomeWraper> to keep all matrixes in one vector or use?
 };

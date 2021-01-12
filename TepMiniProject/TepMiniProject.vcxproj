@@ -88,6 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,6 +103,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,6 +133,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,6 +149,10 @@
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="MatrixErrorCodes.h" />
     <ClInclude Include="MatrixException.h" />
+    <ClInclude Include="MatrixWrapper.h" />
+    <ClInclude Include="MatrixWrapperDouble.h" />
+    <ClInclude Include="MatrixWrapperFloat.h" />
+    <ClInclude Include="MatrixWrapperInt.h" />
     <ClInclude Include="ReadMatrix.h" />
     <ClInclude Include="RefCounter.h" />
     <ClInclude Include="SmartPointer.h" />
@@ -154,6 +162,11 @@
     <ClCompile Include="ConsoleManagment.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MatrixErrorCodes.cpp" />
+    <ClCompile Include="MatrixWrapper.cpp" />
+    <ClCompile Include="MatrixWrapperDouble.cpp" />
+    <ClCompile Include="MatrixWrapperFloat.cpp" />
+    <ClCompile Include="MatrixWrapperInt.cpp" />
+    <ClCompile Include="Type.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="mat_int_example.txt" />

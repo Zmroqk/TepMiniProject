@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Pliki nagłówkowe\MatrixWrapper">
+      <UniqueIdentifier>{c4662bc8-a360-4fa8-9213-b62554ca29a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SmartPointer.h">
@@ -45,6 +48,18 @@
     <ClInclude Include="Localisation.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="MatrixWrapper.h">
+      <Filter>Pliki nagłówkowe\MatrixWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="MatrixWrapperInt.h">
+      <Filter>Pliki nagłówkowe\MatrixWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="MatrixWrapperFloat.h">
+      <Filter>Pliki nagłówkowe\MatrixWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="MatrixWrapperDouble.h">
+      <Filter>Pliki nagłówkowe\MatrixWrapper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -54,6 +69,21 @@
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="MatrixErrorCodes.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="MatrixWrapperInt.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="MatrixWrapperFloat.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="MatrixWrapperDouble.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="MatrixWrapper.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="Type.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
