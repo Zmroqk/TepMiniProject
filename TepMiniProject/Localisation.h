@@ -77,6 +77,7 @@ namespace localisation{
 		const string ADD = "Dodaj";
 		const string SUBSTRACT = "Odejmij";
 		const string MULTIPLY = "Pomnoz";
+		const string MULTIPLY_BY_VALUE = "Pomnoz prezez wartosc";
 		const string TRANSPOSITION = "Transponuj";
 		const string SCALAR_PRODUCT = "Iloczyn skalarny";
 	}

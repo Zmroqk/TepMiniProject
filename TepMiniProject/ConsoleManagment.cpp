@@ -2,17 +2,8 @@
 
 ConsoleManagment::~ConsoleManagment()
 {
-    for (int i = 0; i < matrixInt.size(); i++) {
-        delete matrixInt[i];
-    }
-    for (int i = 0; i < matrixFloat.size(); i++) {
-        delete matrixFloat[i];
-    }
-    for (int i = 0; i < matrixDouble.size(); i++) {
-        delete matrixDouble[i];
-    }
-    for (int i = 0; i < matrixString.size(); i++) {
-        delete matrixString[i];
+    for (int i = 0; i < matrixes.size(); i++) {
+        delete matrixes[i];
     }
 }
 
@@ -45,22 +36,27 @@ string ConsoleManagment::GetLine(const string& prompt, bool useCLS) const
         GetInputHelper(character, text);
     } while (character != NEW_LINE);
     cout << endl;
-    return text;
+    return std::move(text);
 }
 
 int ConsoleManagment::GetInt(const string& prompt, bool useCLS) const
 {
-    return (int)GetFloat(prompt, useCLS);
+    return (int)GetDouble(prompt, useCLS);
 }
 
 float ConsoleManagment::GetFloat(const string& prompt, bool useCLS) const
+{
+    return (float)GetDouble(prompt, useCLS);
+}
+
+double ConsoleManagment::GetDouble(const string& prompt, bool useCLS) const
 {
     int character = NEW_LINE;
     string text = "";
     if (useCLS)
         ClearScreen();
     cout << prompt << ": ";
-    do {      
+    do {
         character = _getch();
         if (text.size() == 0 && character == MINUS) {
             text += (char)character;
@@ -73,24 +69,28 @@ float ConsoleManagment::GetFloat(const string& prompt, bool useCLS) const
     } while (character != NEW_LINE);
     cout << endl;
     if (text != "" && text != "-") {
-        return stof(text.c_str());
+        return stod(text.c_str());
     }
     return 0;
 }
 
-int ConsoleManagment::GetOption(const string& prompt, vector<string>& options) const
+int ConsoleManagment::GetOption(const string& prompt, vector<string>& options, bool useReturn) const
 {
+    if(useReturn)
+        options.push_back(localisation::STRING_RETURN);
     int wybor;
-    string propmpt = prompt + localisation::NEW_LINE;
+    string promptString = prompt + localisation::NEW_LINE;
     for (int i = 0; i < options.size(); i++) {
-        propmpt += to_string(i + 1) + ". "  + options[i] + localisation::NEW_LINE;
+        promptString += to_string(i + 1) + ". "  + options[i] + localisation::NEW_LINE;
     }
-    propmpt += localisation::STRING_CHOOSE_OPTION;
+    promptString += localisation::STRING_CHOOSE_OPTION;
     do {
-        ClearScreen();
-        
+        ClearScreen();    
         try {
-            wybor = this->GetInt(propmpt) - 1;
+            wybor = this->GetInt(promptString) - 1;
+            if (useReturn && wybor == options.size() - 1) {
+                return -1;
+            }
         }
         catch (exception e) {
             wybor = -1;
@@ -99,13 +99,13 @@ int ConsoleManagment::GetOption(const string& prompt, vector<string>& options) c
     return wybor;
 }
 
-int ConsoleManagment::GetOption(const string& prompt, initializer_list<string> options) const
+int ConsoleManagment::GetOption(const string& prompt, initializer_list<string> options, bool useReturn) const
 {
     vector<string> opt;
     for (int i = 0; i < options.size(); i++) {
         opt.push_back(options.begin()[i]);
     }
-    return this->GetOption(prompt, opt);
+    return this->GetOption(prompt, opt, useReturn);
 }
 
 void ConsoleManagment::Pause() const
@@ -128,7 +128,7 @@ void ConsoleManagment::UseMenu()
             localisation::main_menu::DO_OPERAION_MATRIX,
             localisation::main_menu::MODIFY_MATRIX,
             localisation::main_menu::END_PROGRAM
-            });
+            }, false);
         switch (option) {
         case 0:
             UseTypeOfMatrixMenu(&ConsoleManagment::UseCreateMatrixMenu);
@@ -160,15 +160,10 @@ void ConsoleManagment::UseTypeOfMatrixMenu(void(ConsoleManagment::*nextMenu)(Typ
         localisation::type_menu::MATRIX_TYPE_INT, 
         localisation::type_menu::MATRIX_TYPE_FLOAT, 
         localisation::type_menu::MATRIX_TYPE_DOUBLE, 
-        localisation::type_menu::MATRIX_TYPE_STRING,
-        localisation::STRING_RETURN
+        localisation::type_menu::MATRIX_TYPE_STRING
         });
-    switch (option) {
-        case 0: case 1: case 2: case 3: 
-            (this->*nextMenu)((Type)option);
-            break;
-        default:
-            return;
+    if (option != -1) {
+        (this->*nextMenu)((Type)(option+1));
     }
 }
 
@@ -179,10 +174,12 @@ void ConsoleManagment::UseCreateMatrixMenu(Type option)
     int optionLocal = GetOption(title, {
         localisation::add_matrix_menu::RANDOM,
         localisation::add_matrix_menu::FROM_FILE,
-        localisation::add_matrix_menu::IDENTITY,
-        localisation::STRING_RETURN
+        localisation::add_matrix_menu::IDENTITY
         });
-    if (optionLocal != 1 && optionLocal != 3) {
+    if (optionLocal == -1) {
+        return;
+    }
+    if (optionLocal != 1) {
         ClearScreen();
         //first question
         string prompt = localisation::STRING_ASK_FIRST_DIMENSION;
@@ -199,124 +196,42 @@ void ConsoleManagment::UseCreateMatrixMenu(Type option)
             secondDimension = GetInt(prompt);
         } while (secondDimension <= 0);
 
+        MatrixWrapper* matrixWrapper = MatrixWrapper::CreateMatrixWrapper(this, option, firstDimension, secondDimension);
+        if (matrixWrapper == nullptr) {
+            cout << "Tworzenie macierzy nie powiodlo sie" << endl; // dodac do lokalizacji !!!
+            Pause();
+            return;
+        }
+        matrixes.push_back(matrixWrapper);
         //end question
-        if (optionLocal == 0) {
-            prompt = localisation::add_matrix_menu::ASK_RANDOM_RANGE;
-            int range;
-            int startValue;
-            do {
-                range = GetInt(prompt);
-            } while (range <= 0);
-            prompt = localisation::add_matrix_menu::ASK_RANDOM_START;
-            startValue = GetInt(prompt);
-            if (option == Type::INT) {
-                matrixInt.push_back(new Matrix<int>(firstDimension, secondDimension));
-                ProcessResult(matrixInt[matrixInt.size() - 1]->GenerateRandomValues(range, startValue));
-            }
-            else if (option == Type::FLOAT) {
-                matrixFloat.push_back(new Matrix<float>(firstDimension, secondDimension));
-                ProcessResult(matrixFloat[matrixFloat.size() - 1]->GenerateRandomValues(range, startValue));
-            }
-            else if (option == Type::DOUBLE) {
-                matrixDouble.push_back(new Matrix<double>(firstDimension, secondDimension));
-                ProcessResult(matrixDouble[matrixDouble.size() - 1]->GenerateRandomValues(range, startValue));
-            }
-            else if (option == Type::STRING) {
-                matrixString.push_back(new Matrix<string>(firstDimension, secondDimension));
-                ProcessResult(matrixString[matrixString.size() - 1]->GenerateRandomValues(range, startValue));
-            }
+        if (optionLocal == 0) {         
+            ProcessResult(matrixWrapper->GenerateRandomValues());
         }
         else if (optionLocal == 2) {
-            auto tempFunction = [](ConsoleManagment& cm, auto& vec, auto* newMatrix, auto& value, auto& valueForRest) {
-                if (newMatrix->GetFirstMatrixDimension() != newMatrix->GetSecondMatrixDimension()) {
-                    delete newMatrix;
-                    cout << localisation::add_matrix_menu::CANT_CREATE << endl;
-                    cm.Pause();
-                    return;
-                }
-                vec.push_back(newMatrix);
-                cm.ProcessResult(vec[vec.size() - 1]->SetIdentityMatrix(value, valueForRest));
-                return;
-            };
-            prompt = localisation::add_matrix_menu::ASK_DIAGONAL;
-            float value = GetFloat(prompt);
-            prompt = localisation::add_matrix_menu::ASK_REST;
-            float valueForRest = GetFloat(prompt);
-            if (option == Type::INT) {
-                Matrix<int>* newMatrix = new Matrix<int>(firstDimension, secondDimension);
-                int valueTmp = value;
-                int valueForRestTmp = valueForRest;
-                tempFunction(*this, matrixInt, newMatrix, valueTmp, valueForRestTmp);
-            }
-            else if (option == Type::FLOAT) {
-                Matrix<float>* newMatrix = new Matrix<float>(firstDimension, secondDimension);
-                tempFunction(*this, matrixFloat, newMatrix, value, valueForRest);
-            }
-            else if (option == Type::DOUBLE) {
-                Matrix<double>* newMatrix = new Matrix<double>(firstDimension, secondDimension);
-                double valueTmp = value;
-                double valueForRestTmp = valueForRest;
-                tempFunction(*this, matrixDouble, newMatrix, valueTmp, valueForRestTmp);
-            }
-            else if (option == Type::STRING) {
-                cout << localisation::STRING_OPERATION_UNSUPPORTED << endl;
-                Pause();
-            }
+            ProcessResult(matrixWrapper->SetIdentityMatrix());
         }
     }      
     else if (optionLocal == 1) {
-        auto tempFunction = [](ConsoleManagment& cm, string& path, auto& vec, auto* newMatrix) {
-            if (cm.ProcessResult(newMatrix->SetNewMatrixFromFile(path))) {
-                vec.push_back(newMatrix);
-            }
-            else {
-                delete newMatrix;
-            }
-        };
         string path;
         string prompt = localisation::add_matrix_menu::ASK_FILE_PATH;
         path = GetLine(prompt);
-        if (option == Type::INT) {
-            Matrix<int>* newMatrix = new Matrix<int>();
-            tempFunction(*this, path, matrixInt, newMatrix);
+        MatrixWrapper* matrixWrapper = MatrixWrapper::CreateMatrixWrapper(this, option, path);
+        if (matrixWrapper == nullptr) {
+            cout << "Tworzenie macierzy nie powiodlo sie" << endl; // dodac do lokalizacji !!!
+            Pause();
+            return;
         }
-        else if (option == Type::FLOAT) {
-            Matrix<float>* newMatrix = new Matrix<float>();
-            tempFunction(*this, path, matrixFloat, newMatrix);
-        }
-        else if (option == Type::DOUBLE) {
-            Matrix<double>* newMatrix = new Matrix<double>();
-            tempFunction(*this, path, matrixDouble, newMatrix);
-        }
-        else if (option == Type::STRING) {
-            Matrix<string>* newMatrix = new Matrix<string>();
-            tempFunction(*this, path, matrixString, newMatrix);
-        }
+        matrixes.push_back(matrixWrapper);
     }    
 }
 
 void ConsoleManagment::UseShowMatrixMenu(Type option)
 {
-    void* matrix = nullptr;
+    MatrixWrapper* matrix = nullptr;
     do {
         matrix = ChooseMatrix(option);
         if (matrix != nullptr) {
-            if (option == Type::INT) {
-                Matrix<int>* tmp = (Matrix<int>*)matrix;
-                cout << tmp->ToString() << endl;
-            }
-            else if (option == Type::FLOAT) {
-                Matrix<float>* tmp = (Matrix<float>*)matrix;
-                cout << tmp->ToString() << endl;
-            }
-            else if (option == Type::DOUBLE) {
-                Matrix<double>* tmp = (Matrix<double>*)matrix;
-                cout << tmp->ToString() << endl;
-            }
-            else if (option == Type::STRING) {
-                Matrix<string>* tmp = (Matrix<string>*)matrix;
-                cout << tmp->ToString() << endl;
-            }
+            cout << matrix->ToString() << endl;
             Pause();
         }
     } while (matrix != nullptr);  
@@ -325,29 +240,15 @@ void ConsoleManagment::UseShowMatrixMenu(Type option)
 void ConsoleManagment::UseDeleteMatrixMenu(Type option)
 {
     ClearScreen();
-    void* matrix = ChooseMatrix(option);
+    MatrixWrapper* matrix = ChooseMatrix(option);
     if (matrix != nullptr) {
-        auto tempFunction = [](auto& vec, auto searched) {
-            int i = 0;
-            while (i < vec.size() && vec[i] != searched) {
-                i++;
-            }
-            delete vec[i];
-            vec[i] = nullptr;
-            vec.erase(vec.begin() + i);
-        };
-        if (option == Type::INT) {
-            tempFunction(matrixInt, (Matrix<int>*)matrix);
+        int i = 0;
+        while (i < matrixes.size() && matrixes[i] != matrix) {
+            i++;
         }
-        else if (option == Type::FLOAT) {
-            tempFunction(matrixFloat, (Matrix<float>*)matrix);
-        }
-        else if (option == Type::DOUBLE) {
-            tempFunction(matrixDouble, (Matrix<double>*)matrix);
-        }
-        else if (option == Type::STRING) {
-            tempFunction(matrixString, (Matrix<string>*)matrix);
-        }
+        delete matrixes[i];
+        matrixes[i] = nullptr;
+        matrixes.erase(matrixes.begin() + i);
     }
 }
 
@@ -361,173 +262,96 @@ void ConsoleManagment::UseDoOperationMenu(Type option)
             localisation::operation_menu::ADD, 
             localisation::operation_menu::SUBSTRACT, 
             localisation::operation_menu::MULTIPLY, 
+            localisation::operation_menu::MULTIPLY_BY_VALUE, 
             localisation::operation_menu::TRANSPOSITION, 
-            localisation::operation_menu::SCALAR_PRODUCT,
-            localisation::STRING_RETURN
+            localisation::operation_menu::SCALAR_PRODUCT
             });
-        if (optionLocal < 5) {
-            void* matrixOne = ChooseMatrix(option);
+        if (optionLocal != -1) {
+            MatrixWrapper* matrixOne = ChooseMatrix(option);
             if (matrixOne != nullptr) {
-                auto tempPrintFunction = [](ConsoleManagment& cm, auto* matrix, auto* matrixSecond, auto* newMatrix) {
-                    cout << localisation::STRING_FIRST_MATRIX << endl;
-                    cout << matrix->ToString() << endl;
-                    cout << localisation::STRING_SECOND_MATRIX << endl;
-                    cout << matrixSecond->ToString() << endl;
-                    cout << localisation::STRING_RESULT << endl;
-                    cout << newMatrix->ToString() << endl;
-                    cm.Pause();
-                };
-                if (optionLocal == 0) {
-                    void* matrixSecond = ChooseMatrix(option, localisation::STRING_ASK + localisation::STRING_SECOND_MATRIX);
-                    if (matrixSecond == nullptr)
-                        return;
-                    auto tempFunction = [](ConsoleManagment& cm, auto& vec, auto* matrix, auto* matrixSecond, auto* newMatrix, auto tempPrintFunction) {
-                        if (cm.ProcessResult(matrix->Add(*matrixSecond, &newMatrix))) {
-                            vec.push_back(newMatrix);
-                            tempPrintFunction(cm, matrix, matrixSecond, newMatrix);
+                MatrixStatus status;
+                MatrixWrapper* newMatrix = nullptr;
+                if (optionLocal != 3 && optionLocal != 4) {
+                    MatrixWrapper* matrixSecond = ChooseMatrix(option, localisation::STRING_ASK + localisation::STRING_SECOND_MATRIX);
+                    if (matrixSecond != nullptr) {
+
+                        if (optionLocal == 0) {
+                            newMatrix = matrixOne->Add(matrixSecond, &status);
+                            if (!ProcessResult(status)) {
+                                return;
+                            }
+                            matrixes.push_back(newMatrix);
                         }
-                    };
-                    if (option == Type::INT) {
-                        Matrix<int>* newMatrix = nullptr;
-                        tempFunction(*this, matrixInt, (Matrix<int>*)matrixOne, (Matrix<int>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::FLOAT) {
-                        Matrix <float>* newMatrix = nullptr;
-                        tempFunction(*this, matrixFloat, (Matrix<float>*)matrixOne, (Matrix<float>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::DOUBLE) {
-                        Matrix<double>* newMatrix = nullptr;
-                        tempFunction(*this, matrixDouble, (Matrix<double>*)matrixOne, (Matrix<double>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::STRING) {
-                        Matrix<string>* newMatrix = nullptr;
-                        tempFunction(*this, matrixString, (Matrix<string>*)matrixOne, (Matrix<string>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                }
-                else if (optionLocal == 1) {
-                    void* matrixSecond = ChooseMatrix(option, localisation::STRING_ASK + localisation::STRING_SECOND_MATRIX);
-                    if (matrixSecond == nullptr)
-                        return;
-                    auto tempFunction = [](ConsoleManagment& cm, auto& vec, auto* matrix, auto* matrixSecond, auto* newMatrix, auto tempPrintFunction) {
-                        if (cm.ProcessResult(matrix->Substract(*matrixSecond, &newMatrix))) {
-                            vec.push_back(newMatrix);
-                            tempPrintFunction(cm, matrix, matrixSecond, newMatrix);
+                        else if (optionLocal == 1) {
+                            newMatrix = matrixOne->Substract(matrixSecond, &status);
+                            if (!ProcessResult(status)) {
+                                return;
+                            }
+                            matrixes.push_back(newMatrix);
                         }
-                    };
-                    if (option == Type::INT) {
-                        Matrix<int>* newMatrix = nullptr;
-                        tempFunction(*this, matrixInt, (Matrix<int>*)matrixOne, (Matrix<int>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::FLOAT) {
-                        Matrix <float>* newMatrix = nullptr;
-                        tempFunction(*this, matrixFloat, (Matrix<float>*)matrixOne, (Matrix<float>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::DOUBLE) {
-                        Matrix<double>* newMatrix = nullptr;
-                        tempFunction(*this, matrixDouble, (Matrix<double>*)matrixOne, (Matrix<double>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::STRING) {
-                        cout << "Operacja niewspierana" << endl;
-                        Pause();
-                    }
-                }
-                else if (optionLocal == 2) {
-                    void* matrixSecond = ChooseMatrix(option, localisation::STRING_ASK + localisation::STRING_SECOND_MATRIX);
-                    if (matrixSecond == nullptr)
-                        return;
-                    auto tempFunction = [](ConsoleManagment& cm, auto& vec, auto* matrix, auto* matrixSecond, auto* newMatrix, auto tempPrintFunction) {
-                        if (cm.ProcessResult(matrix->Multiply(*matrixSecond, &newMatrix))) {
-                            vec.push_back(newMatrix);
-                            tempPrintFunction(cm, matrix, matrixSecond, newMatrix);
+                        else if (optionLocal == 2) {
+                            newMatrix = matrixOne->Multiply(matrixSecond, &status);
+                            if (!ProcessResult(status)) {
+                                return;
+                            }
+                            matrixes.push_back(newMatrix);
                         }
-                    };
-                    if (option == Type::INT) {
-                        Matrix<int>* newMatrix = nullptr;
-                        tempFunction(*this, matrixInt, (Matrix<int>*)matrixOne, (Matrix<int>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::FLOAT) {
-                        Matrix <float>* newMatrix = nullptr;
-                        tempFunction(*this, matrixFloat, (Matrix<float>*)matrixOne, (Matrix<float>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::DOUBLE) {
-                        Matrix<double>* newMatrix = nullptr;
-                        tempFunction(*this, matrixDouble, (Matrix<double>*)matrixOne, (Matrix<double>*)matrixSecond, newMatrix, tempPrintFunction);
-                    }
-                    else if (option == Type::STRING) {
-                        cout << "Operacja niewspierana" << endl;
-                        Pause();
+                        else if (optionLocal == 5) {
+                            double scalar = matrixOne->ScalarProduct(matrixSecond, &status);
+                            if (!ProcessResult(status)) {
+                                return;
+                            }
+                            cout << localisation::STRING_FIRST_MATRIX << endl;
+                            cout << matrixOne->ToString() << endl;
+                            cout << localisation::STRING_SECOND_MATRIX << endl;
+                            cout << matrixSecond->ToString() << endl;
+                            cout << localisation::STRING_RESULT << endl;
+                            cout << scalar << endl;
+                            Pause();
+                            return;
+                        }
+                        OperationResult(matrixOne, matrixSecond, newMatrix);
                     }
                 }
                 else if (optionLocal == 3) {
-                    auto tempFunction = [](ConsoleManagment& cm, auto& vec, auto* matrix, auto* newMatrix) {
-                        if (cm.ProcessResult(matrix->Transposition(&newMatrix))) {
-                            vec.push_back(newMatrix);
-                            cout << localisation::STRING_MATRIX << endl;
-                            cout << matrix->ToString() << endl;
-                            cout << localisation::STRING_RESULT << endl;
-                            cout << newMatrix->ToString() << endl;
-                            cm.Pause();
-                        }
-                    };
-                    if (option == Type::INT) {
-                        Matrix<int>* newMatrix = nullptr;
-                        tempFunction(*this, matrixInt, (Matrix<int>*)matrixOne, newMatrix);
+                    newMatrix = matrixOne->Multiply(&status);
+                    if (!ProcessResult(status)) {
+                        return;
                     }
-                    else if (option == Type::FLOAT) {
-                        Matrix<float>* newMatrix = nullptr;
-                        tempFunction(*this, matrixFloat, (Matrix<float>*)matrixOne, newMatrix);
-                    }
-                    else if (option == Type::DOUBLE) {
-                        Matrix<double>* newMatrix = nullptr;
-                        tempFunction(*this, matrixDouble, (Matrix<double>*)matrixOne, newMatrix);
-                    }
-                    else if (option == Type::STRING) {
-                        Matrix<string>* newMatrix = nullptr;
-                        tempFunction(*this, matrixString, (Matrix<string>*)matrixOne, newMatrix);
-                    }
+                    matrixes.push_back(newMatrix);
+                    OperationResult(matrixOne, newMatrix);
                 }
                 else if (optionLocal == 4) {
-                    void* matrixSecond = ChooseMatrix(option, localisation::STRING_ASK + localisation::STRING_SECOND_MATRIX);
-                    if (matrixSecond == nullptr)
+                    newMatrix = matrixOne->Transposition(&status);
+                    if (!ProcessResult(status)) {
                         return;
-                    auto tempFunction = [](ConsoleManagment& cm, auto& vec, auto* matrix, auto* matrixSecond, auto* value) {
-                        if (cm.ProcessResult(matrix->ScalarProduct(*matrixSecond, value))) {
-                            cout << localisation::operation_menu::SCALAR_PRODUCT << *value << endl;
-                            cout << localisation::STRING_FIRST_VECTOR << endl;
-                            cout << matrix->ToString() << endl;
-                            cout << localisation::STRING_SECOND_VECTOR << endl;
-                            cout << matrixSecond->ToString() << endl;
-                            cout << localisation::STRING_RESULT << endl;
-                            cout << *value << endl;
-                            cm.Pause();
-                        }
-                    };
-                    if (option == Type::INT) {
-                        int* value = new int(0);
-                        tempFunction(*this, matrixInt, (Matrix<int>*)matrixOne, (Matrix<int>*)matrixSecond, value);
-                        delete value;
                     }
-                    else if (option == Type::FLOAT) {
-                        float* value = new float(0);
-                        tempFunction(*this, matrixFloat, (Matrix<float>*)matrixOne, (Matrix<float>*)matrixSecond, value);
-                        delete value;
-                    }
-                    else if (option == Type::DOUBLE) {
-                        double* value = new double();
-                        tempFunction(*this, matrixDouble, (Matrix<double>*)matrixOne, (Matrix<double>*)matrixSecond, value);
-                        delete value;
-                    }
-                    else if (option == Type::STRING) {
-                        cout << localisation::STRING_OPERATION_UNSUPPORTED << endl;
-                        Pause();
-                    }
+                    matrixes.push_back(newMatrix);
+                    OperationResult(matrixOne, newMatrix);
                 }
-            }          
-        }
-        else {
-            optionLocal = -1;
+            }
         }
     }
+}
+
+void ConsoleManagment::OperationResult(MatrixWrapper* matrixOne, MatrixWrapper* matrixSecond, MatrixWrapper* newMatrix)
+{
+    cout << localisation::STRING_FIRST_MATRIX << endl;
+    cout << matrixOne->ToString() << endl;
+    cout << localisation::STRING_SECOND_MATRIX << endl;
+    cout << matrixSecond->ToString() << endl;
+    cout << localisation::STRING_RESULT << endl;
+    cout << newMatrix->ToString() << endl;
+    Pause();
+}
+
+void ConsoleManagment::OperationResult(MatrixWrapper* matrixOne, MatrixWrapper* newMatrix)
+{
+    cout << localisation::STRING_MATRIX << endl;
+    cout << matrixOne->ToString() << endl;
+    cout << localisation::STRING_RESULT << endl;
+    cout << newMatrix->ToString() << endl;
+    Pause();
 }
 
 void ConsoleManagment::UseModifyMatrixMenu(Type option)
@@ -537,84 +361,38 @@ void ConsoleManagment::UseModifyMatrixMenu(Type option)
     int optionLocal = 0;
     while (optionLocal != -1) {
         optionLocal = this->GetOption(title, { 
-            localisation::modify_menu::MODIFY, 
-            localisation::STRING_RETURN 
+            localisation::modify_menu::MODIFY
             });
-        if (optionLocal == 0) {
-            void* matrix = ChooseMatrix(option);
+        if (optionLocal == 0) {            
+            MatrixWrapper* matrix = ChooseMatrix(option);
             if (matrix != nullptr) {
-                auto tempFunction = [](ConsoleManagment& cm, auto* matrix, auto& newValue) {
-                    cm.ClearScreen();
-                    string prompt = localisation::modify_menu::ASK_ROW;
-                    int firstDimension;
-                    do {
-                        firstDimension = cm.GetInt(prompt) - 1;
-                    } while (firstDimension < 0 || firstDimension >= matrix->GetFirstMatrixDimension());
-                    cm.ClearScreen();
-                    prompt = localisation::modify_menu::ASK_COLUMN;
-                    int secondDimension;
-                    do {
-                        secondDimension = cm.GetInt(prompt) - 1;
-                    } while (secondDimension < 0 || secondDimension >= matrix->GetSecondMatrixDimension());
-                    matrix->SetValueAtPosition(newValue, firstDimension, secondDimension);
-                };
-                string prompt = localisation::STRING_ASK_NEW_VALUE;
-                float value = GetFloat(prompt);
-                if (option == Type::INT) {
-                    int valueTmp = value;
-                    tempFunction(*this, (Matrix<int>*)matrix, valueTmp);
-                }
-                else if (option == Type::FLOAT) {
-                    tempFunction(*this, (Matrix<float>*)matrix, value);
-                }
-                else if (option == Type::DOUBLE) {
-                    double valueTmp = value;
-                    tempFunction(*this, (Matrix<double>*)matrix, valueTmp);
-                }
-                else if (option == Type::STRING) {
-                    string valueTmp = to_string(value);
-                    tempFunction(*this, (Matrix<string>*)matrix, valueTmp);
-                }
+                MatrixStatus status = matrix->Modify();
+                if (!ProcessResult(status)) {
+                    return;
+                }               
             }            
-        }
-        else {
-            optionLocal = -1;
         }
     }
 }
 
-void* ConsoleManagment::ChooseMatrix(Type option, const string& prompt)
+MatrixWrapper* ConsoleManagment::ChooseMatrix(Type option, const string& prompt)
 {
     ClearScreen();
-    auto tempFunction = [](ConsoleManagment& cm, auto& vec, const string& prompt) {  //GENERIC LAMBDA EXPRESSION wymaga u¿ycia auto
-        vector<string> matrixes;
-        for (int i = 0; i < vec.size(); i++) {
-            int first = vec[i]->GetFirstMatrixDimension();
-            int second = vec[i]->GetSecondMatrixDimension();
-            matrixes.push_back("[" + to_string(first) + ", " + to_string(second) + "]");
-        }
-        matrixes.push_back(localisation::STRING_RETURN);
-        int selected = cm.GetOption(prompt, matrixes);
-        void* x = nullptr;
-        if (selected >= vec.size()) {
-            return x;
-        }        
-        x = (void*)vec[selected];
-        return x;
-    };
-    if (option == Type::INT && matrixInt.size() > 0) {
-        return tempFunction(*this, matrixInt, prompt);
+    vector<string> matrixesStrings;
+    vector<MatrixWrapper*> matrixesData;
+    int index = 1;
+    for (int i = 0; i < this->matrixes.size(); i++) {
+        if (option == this->matrixes[i]->GetType()) {
+            size_t first = this->matrixes[i]->GetFirstDimension();
+            size_t second = this->matrixes[i]->GetSecondDimension();
+            matrixesStrings.push_back("[" + to_string(first) + ", " + to_string(second) + "]");
+            matrixesData.push_back(this->matrixes[i]);
+        }       
     }
-    else if (option == Type::FLOAT && matrixFloat.size() > 0) {
-        return tempFunction(*this, matrixFloat, prompt);
-    }
-    else if (option == Type::DOUBLE && matrixDouble.size() > 0) {
-        return tempFunction(*this, matrixDouble, prompt);
-    }
-    else if (option == Type::STRING && matrixString.size() > 0) {
-        return tempFunction(*this, matrixString, prompt);
-    }
-    return nullptr;
+    int selected = GetOption(prompt, matrixesStrings);
+    if(selected == -1)
+        return nullptr;
+    return matrixesData[selected];
 }
 
 bool ConsoleManagment::ProcessResult(MatrixStatus status)
