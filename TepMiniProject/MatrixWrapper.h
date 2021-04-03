@@ -15,7 +15,7 @@ public:
 
 	MatrixWrapper() { this->cm = nullptr; this->matrixType = Type::None; }
 	MatrixWrapper(ConsoleManagment* cm, Type type) { this->cm = cm; this->matrixType = type; }
-	~MatrixWrapper() {};
+	virtual ~MatrixWrapper() {};
 
 	virtual MatrixWrapper* Add(const MatrixWrapper* other, MatrixStatus* status) = 0;
 	virtual MatrixWrapper* Substract(const MatrixWrapper* other, MatrixStatus* status) = 0;

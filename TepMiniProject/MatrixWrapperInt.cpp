@@ -3,7 +3,7 @@
 MatrixWrapperInt::MatrixWrapperInt(ConsoleManagment* cm, const string& path) : MatrixWrapper(cm, Type::INT)
 {
     this->matrix = new Matrix<int>(0, 0);
-    this->matrix->SetNewMatrixFromFile(path);
+    cm->ProcessResult(this->matrix->SetNewMatrixFromFile(path));
 }
 
 MatrixWrapper* MatrixWrapperInt::Add(const MatrixWrapper* other, MatrixStatus* status)

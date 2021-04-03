@@ -3,7 +3,7 @@
 MatrixWrapperDouble::MatrixWrapperDouble(ConsoleManagment* cm, const string& path) : MatrixWrapper(cm, Type::DOUBLE)
 {
     this->matrix = new Matrix<double>(0, 0);
-    this->matrix->SetNewMatrixFromFile(path);
+    cm->ProcessResult(this->matrix->SetNewMatrixFromFile(path));
 }
 
 MatrixWrapper* MatrixWrapperDouble::Add(const MatrixWrapper* other, MatrixStatus* status)

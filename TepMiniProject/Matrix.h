@@ -674,9 +674,13 @@ MatrixStatus Matrix<T>::SetNewMatrix(T** newMatrix, size_t firstDimSize, size_t 
 template<typename T>
 MatrixStatus Matrix<T>::SetNewMatrixFromFile(const std::string& path)
 {
+	MatrixStatus status = MatrixStatus::Success;
 	ReadMatrix<T> readMatrix(&path);
-	if (readMatrix.ReadFile()) {
-		return this->SetNewMatrix(readMatrix.GetMatrix(), readMatrix.GetFirstDimension(), readMatrix.GetSecondDimension());		
+	if (readMatrix.ReadFile(&status)) {
+		MatrixStatus setMatrixStatus = this->SetNewMatrix(readMatrix.GetMatrix(), readMatrix.GetFirstDimension(), readMatrix.GetSecondDimension());
+		if(status != MatrixStatus::Success)
+			return setMatrixStatus | status;
+		return setMatrixStatus;
 	}
 	return MatrixStatus::NoDataProvided;
 }

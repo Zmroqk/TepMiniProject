@@ -3,7 +3,7 @@
 MatrixWrapperFloat::MatrixWrapperFloat(ConsoleManagment* cm, const string& path) : MatrixWrapper(cm, Type::FLOAT)
 {
     this->matrix = new Matrix<float>(0, 0);
-    this->matrix->SetNewMatrixFromFile(path);
+    cm->ProcessResult(this->matrix->SetNewMatrixFromFile(path));
 }
 
 MatrixWrapper* MatrixWrapperFloat::Add(const MatrixWrapper* other, MatrixStatus* status)

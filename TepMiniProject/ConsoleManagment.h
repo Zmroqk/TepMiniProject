@@ -53,6 +53,7 @@ public:
 	void UseDeleteMatrixMenu(Type option);
 	void UseDoOperationMenu(Type option);
 	void UseModifyMatrixMenu(Type option);
+	bool ProcessResult(MatrixStatus status);
 
 //-------------------------------------------------------------------operators---------------------------------------------------------------------------
 
@@ -62,7 +63,6 @@ public:
 //-------------------------------------------------------------------private-----------------------------------------------------------------------------
 private:
 	void GetInputHelper(int character, std::string& text) const;
-	bool ProcessResult(MatrixStatus status);
 	MatrixWrapper* ChooseMatrix(Type option, const string& prompt = localisation::STRING_CHOOSE_MATRIX);
 
 	void OperationResult(MatrixWrapper* matrixOne, MatrixWrapper* matrixSecond, MatrixWrapper* newMatrix);

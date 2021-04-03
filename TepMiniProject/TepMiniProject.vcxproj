@@ -169,6 +169,7 @@
     <ClCompile Include="Type.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="mat_float_example.txt" />
     <Text Include="mat_int_example.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
